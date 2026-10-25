@@ -29,7 +29,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Colores que utilizados en la pantalla
 val Verde = Color(0xFF2E7D32)
 val Rojo = Color(0xFFC62828)
 val GrisClaro = Color(0xFFF2F2F2)
@@ -197,7 +196,6 @@ fun TarjetaSensor(titulo: String, valor: String, colorValor: Color, modifier: Mo
     }
 }
 
-// Una fila de la tabla: 3 celdas del mismo ancho
 @Composable
 fun FilaTabla(
     hora: String,
