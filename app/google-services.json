@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1085559806470",
+    "project_id": "climatizacionapp",
+    "storage_bucket": "climatizacionapp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1085559806470:android:28335f50cf6c8776c00187",
+        "android_client_info": {
+          "package_name": "com.example.interfazclimatizacionapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDyD997udv__09lyQSQPXnIz_0LluUyYc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
