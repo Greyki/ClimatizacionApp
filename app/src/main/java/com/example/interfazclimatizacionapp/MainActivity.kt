@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -24,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -102,20 +105,31 @@ fun Pantalla() {
                 .padding(16.dp)
         ) {
             Text("Aire acondicionado", fontSize = 13.sp, color = Color.White)
-            Text(estado, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    painterResource(R.drawable.ic_aire),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(32.dp)
+                )
+                Text(estado, fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            }
             Text(motivo, fontSize = 13.sp, color = Color.White)
         }
 
         // Primera fila de sensores
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TarjetaSensor("Presencia", textoPresencia, colorPresencia, Modifier.weight(1f))
-            TarjetaSensor("Temperatura", "$temp °C", colorTemperatura, Modifier.weight(1f))
+            TarjetaSensor("Presencia", textoPresencia, colorPresencia, R.drawable.ic_presencia, Modifier.weight(1f))
+            TarjetaSensor("Temperatura", "$temp °C", colorTemperatura, R.drawable.ic_temperatura, Modifier.weight(1f))
         }
 
         // Segunda fila de sensores
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TarjetaSensor("Humedad", "48 %", Color.Black, Modifier.weight(1f))
-            TarjetaSensor("Alerta sonora", textoAlerta, colorAlerta, Modifier.weight(1f))
+            TarjetaSensor("Humedad", "48 %", Color.Black, R.drawable.ic_humedad, Modifier.weight(1f))
+            TarjetaSensor("Alerta sonora", textoAlerta, colorAlerta, R.drawable.ic_alerta, Modifier.weight(1f))
         }
 
         // Controles para probar la pantalla (simulan los sensores)
@@ -185,13 +199,25 @@ fun Pantalla() {
 
 // Una tarjeta de sensor. La escribimos una vez y la usamos 4 veces.
 @Composable
-fun TarjetaSensor(titulo: String, valor: String, colorValor: Color, modifier: Modifier) {
+fun TarjetaSensor(titulo: String, valor: String, colorValor: Color, icono: Int, modifier: Modifier) {
     Column(
         modifier = modifier
             .background(GrisClaro, RoundedCornerShape(12.dp))
             .padding(12.dp)
     ) {
-        Text(titulo, fontSize = 12.sp, color = GrisTexto)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            // El ícono toma el mismo color que el valor, así también cambia según el estado
+            Icon(
+                painterResource(icono),
+                contentDescription = null,
+                tint = colorValor,
+                modifier = Modifier.size(16.dp)
+            )
+            Text(titulo, fontSize = 12.sp, color = GrisTexto)
+        }
         Text(valor, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = colorValor)
     }
 }
