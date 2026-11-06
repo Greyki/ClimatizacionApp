@@ -1,8 +1,12 @@
 package com.example.interfazclimatizacionapp
 
+import android.Manifest
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +24,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -28,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
@@ -44,6 +50,7 @@ val GrisTexto = Color(0xFF666666)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        crearCanal(this)
         setContent {
             // Firebase recuerda la sesión: si ya entró antes, currentUser no es null
             var conectado by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser != null) }
@@ -66,17 +73,37 @@ fun Pantalla(onCerrarSesion: () -> Unit = {}) {
     var presencia by remember { mutableStateOf(true) }
     var temperatura by remember { mutableFloatStateOf(27f) }
     var umbral by remember { mutableFloatStateOf(26f) }
+    var critica by remember { mutableFloatStateOf(35f) }
 
     // Pasamos los valores a enteros para mostrarlos sin decimales
     val temp = temperatura.toInt()
     val limite = umbral.toInt()
+    val limiteCritico = critica.toInt()
+
+    // Las dos condiciones que generan notificaciones
+    val encendido = presencia && temp >= limite
+    val esCritica = temp >= limiteCritico
+
+    // Pide permiso de notificaciones una vez (Android 13 o superior)
+    val context = LocalContext.current
+    val pedirPermiso = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+    LaunchedEffect(Unit) {
+        if (Build.VERSION.SDK_INT >= 33) pedirPermiso.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    AlActivarse(esCritica) {
+        notificar(context, ID_CRITICA, "Temperatura crítica", "La habitación está a $temp °C (límite: $limiteCritico °C)")
+    }
+    AlActivarse(encendido) {
+        notificar(context, ID_ENCENDIDO, "Aire acondicionado encendido", "Hay presencia y $temp °C supera el umbral de $limite °C")
+    }
 
     // Este if decide qué muestra la tarjeta principal (3 estados)
     val estado: String
     val motivo: String
     val colorTarjeta: Color
 
-    if (presencia && temp >= limite) {
+    if (encendido) {
         estado = "Encendido"
         motivo = "Hay presencia y $temp °C supera el umbral de $limite °C"
         colorTarjeta = Verde
@@ -94,8 +121,8 @@ fun Pantalla(onCerrarSesion: () -> Unit = {}) {
     val textoPresencia = if (presencia) "Detectada" else "Vacía"
     val colorPresencia = if (presencia) Verde else GrisTexto
     val colorTemperatura = if (temp >= limite) Rojo else Color.Black
-    val textoAlerta = if (estado == "Encendido") "Sonando" else "Silencio"
-    val colorAlerta = if (estado == "Encendido") Rojo else GrisTexto
+    val textoAlerta = if (encendido) "Sonando" else "Silencio"
+    val colorAlerta = if (encendido) Rojo else GrisTexto
 
     Column(
         modifier = Modifier
@@ -196,6 +223,22 @@ fun Pantalla(onCerrarSesion: () -> Unit = {}) {
                 value = umbral,
                 onValueChange = { umbral = it },
                 valueRange = 18f..35f
+            )
+        }
+
+        // Temperatura crítica: al llegar a este valor se envía una notificación
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(GrisClaro, RoundedCornerShape(12.dp))
+                .padding(12.dp)
+        ) {
+            Text("Temperatura crítica (notificación)", fontSize = 13.sp, color = GrisTexto)
+            Text("$limiteCritico °C", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Rojo)
+            Slider(
+                value = critica,
+                onValueChange = { critica = it },
+                valueRange = 25f..40f
             )
         }
 
