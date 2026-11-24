@@ -1,6 +1,7 @@
 package com.example.interfazclimatizacionapp
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -40,6 +41,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.firebase.auth.FirebaseAuth
+import android.bluetooth.BluetoothAdapter
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 
 val Verde = Color(0xFF2E7D32)
 val Rojo = Color(0xFFC62828)
@@ -67,6 +71,33 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
+@SuppressLint("MissingPermission")
+fun conectarHC05(
+    bluetooth: BluetoothSerial,
+    onEstado: (String) -> Unit,
+    onDatos: (String) -> Unit
+) {
+    val adapter = BluetoothAdapter.getDefaultAdapter()
+
+    if (adapter == null) {
+        onEstado("Bluetooth no disponible")
+        return
+    }
+
+    if (!adapter.isEnabled) {
+        onEstado("Activa Bluetooth en el teléfono")
+        return
+    }
+
+    bluetooth.conectar(
+        adapter = adapter,
+        onResultado = { ok, mensaje ->
+            onEstado(mensaje)
+        },
+        onDatos = onDatos
+    )
+}
 @Composable
 fun Pantalla(onCerrarSesion: () -> Unit = {}) {
     // Variables con estado: cuando cambian, la pantalla se redibuja sola
@@ -123,6 +154,47 @@ fun Pantalla(onCerrarSesion: () -> Unit = {}) {
     val colorTemperatura = if (temp >= limite) Rojo else Color.Black
     val textoAlerta = if (encendido) "Sonando" else "Silencio"
     val colorAlerta = if (encendido) Rojo else GrisTexto
+
+    val bluetooth = remember { BluetoothSerial() }
+
+    var estadoBluetooth by remember {
+        mutableStateOf("Desconectado")
+    }
+
+    var conectadoBT by remember {
+        mutableStateOf(false)
+    }
+
+    fun procesarDatos(linea: String) {
+
+        val p = Regex("""P:(\d+)""")
+            .find(linea)?.groupValues?.get(1)?.toIntOrNull()
+
+        val t = Regex("""T:(\d+)""")
+            .find(linea)?.groupValues?.get(1)?.toIntOrNull()
+
+        p?.let {
+            presencia = it >= 512
+        }
+
+        t?.let {
+            temperatura = 15f + (it / 1023f) * 25f
+        }
+    }
+
+    val pedirBluetooth = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { permitido ->
+        if (permitido) {
+            conectarHC05(
+                bluetooth,
+                onEstado = { estadoBluetooth = it },
+                onDatos = { procesarDatos(it) }
+            )
+        } else {
+            estadoBluetooth = "Permiso Bluetooth denegado"
+        }
+    }
 
     Column(
         modifier = Modifier
